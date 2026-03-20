@@ -27,10 +27,10 @@ class Ore {
     ) {
         this.name = name;
         this.tier = tier;
-        this.rarity = Number(rarity.substring(2));
-        this.value = Number(value.replace("$", ""));
+        this.rarity = Number(rarity.substring(2).replaceAll(",", ""));
+        this.value = Number(value.replace("$", "").replaceAll(",", ""));
 
-        const dpt: string[] = depth.replaceAll("m", "").split("-");
+        const dpt: string[] = depth.replaceAll("m", "").replaceAll("+", "").split("-");
         this.depthStart = Number(dpt[0]);
         this.depthEnd = Number(dpt[1]);
 
@@ -43,7 +43,7 @@ class Ore {
                 if (k == null || k[1] == null) return;
                 return k[1]!.replaceAll("</a>", "");
             }).filter(s => s != null)!.toArray();
-        }else
+        } else
             this.usedIn = [];
 
         this.description = description;
@@ -81,7 +81,11 @@ class Ore {
         name = titleContentElement!.textContent as string;
         tier = dataRows.find(s => s.dataName == "Tier")?.dataValue!.textContent!;
         rarity = dataRows.find(s => s.dataName == "Rarity")?.dataValue!.textContent!;
-        value = dataRows.find(s => s.dataName == "Value")?.dataValue!.textContent!;
+        const cash_text = dom.querySelector(`
+                    .cash-text
+                `);
+        const cash_text_content = cash_text?.textContent!;
+        value = cash_text_content;
         depth = dataRows.find(s => s.dataName == "Depth")?.dataValue!.textContent!;
         health = dataRows.find(s => s.dataName == "Health")?.dataValue!.textContent!;
         usedIn = dataRows.find(s => s.dataName == "Used In")?.dataValue!;
@@ -172,14 +176,18 @@ for (let i = 0; i < oreURLs.length; i++) {
 
     const ore = await Ore.fromURL(s);
 
-    const json_pretty = JSON.stringify(ore, null, 4) + ",";
-    const json = JSON.stringify(ore) + ",";
+    let json_pretty = JSON.stringify(ore, null, 4);
+    let json = JSON.stringify(ore);
+    if (i != oreURLs.length - 1) {
+        json_pretty = json_pretty + ",";
+        json = json + ",";
+    }
 
-    fs.appendFile("ores.json",json_pretty, () => { });
+    fs.appendFile("ores.json", json_pretty, () => { });
     fs.appendFile("ores.min.json", json, () => { });
 
     console.log(" : downloaded");
-    await setTimeout(1000);
+    await setTimeout(200);
 }
 
 fs.appendFile("ores.json", "]", () => { });
